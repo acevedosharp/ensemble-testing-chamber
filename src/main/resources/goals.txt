@@ -1,0 +1,8 @@
+
+- definir el espacio de búsqueda para HASCO, variable en el tamano máximo de los ensembles
+- implementar el benchmark de HASCO para ejecutar/evaluar candidatos concretos de HASCO teniendo en cuenta la base de datos con que se corre el algoritmo
+- funciones de evaluación general para realizar una comparación entre ML-Plan y EnsembleAutoML.
+
+    la función de comparación debe ejecutar ML-Plan y EnsembleAutoML en un 70% de los datos (entrenarlos) para un tiempo pre-definido (por ejemplo 1h, use Timeout). Después del entrenamiento, la función debe usar los otros 30% de los datos para evaluar la capacidad predectiva de los dos algoritmos. y guardar de forma permanente eses resultados para luego facilitar su agregación
+
+    el split 70/30 debe depender de una semilla aleatoria que se puede entregar en la función de evaluación
