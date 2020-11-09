@@ -46,10 +46,10 @@ import java.util.stream.Collectors;
 public class EpicPerformanceMeasurer {
 
     private static final List<String> DATASET_NAMES = Arrays.asList("datasets/iris.arff");
-    private static final Timeout TIMEOUT = new Timeout(10, TimeUnit.SECONDS);
+    private static final Timeout TIMEOUT = new Timeout(1, TimeUnit.HOURS);
 
     @Test
-    public void epicHascoRunner() throws IOException, URISyntaxException, SQLException {
+    public void epicHascoRunner() throws IOException, URISyntaxException, SQLException, InterruptedException, AlgorithmTimeoutedException, AlgorithmExecutionCanceledException, AlgorithmException {
         List<File> datasets = datasetsAsFiles();
 
         for (int i = 0; i < datasets.size(); i++) {
@@ -88,7 +88,7 @@ public class EpicPerformanceMeasurer {
         System.out.println(res);
     }
 
-    private void runHasco(File dsFile, int i, int j) throws URISyntaxException, IOException, SQLException {
+    private void runHasco(File dsFile, int i, int j) throws URISyntaxException, IOException, SQLException, InterruptedException, AlgorithmTimeoutedException, AlgorithmExecutionCanceledException, AlgorithmException {
         String reqInterface = "EpicEnsemble";
         File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
 
