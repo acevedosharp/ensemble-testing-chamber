@@ -46,10 +46,10 @@ import java.util.stream.Collectors;
 public class EpicPerformanceMeasurer {
 
     private static final List<String> DATASET_NAMES = Arrays.asList("datasets/iris.arff");
-    private static final Timeout TIMEOUT = new Timeout(32, TimeUnit.SECONDS);
+    private static final Timeout TIMEOUT = new Timeout(10, TimeUnit.SECONDS);
 
     @Test
-    public void epicHascoRunner() throws IOException, URISyntaxException {
+    public void epicHascoRunner() throws IOException, URISyntaxException, SQLException {
         List<File> datasets = datasetsAsFiles();
 
         for (int i = 0; i < datasets.size(); i++) {
@@ -88,7 +88,7 @@ public class EpicPerformanceMeasurer {
         System.out.println(res);
     }
 
-    private void runHasco(File dsFile, int i, int j) throws URISyntaxException, IOException {
+    private void runHasco(File dsFile, int i, int j) throws URISyntaxException, IOException, SQLException {
         String reqInterface = "EpicEnsemble";
         File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
 
@@ -110,7 +110,6 @@ public class EpicPerformanceMeasurer {
         ArrayList<HASCOSolutionCandidate<Double>> solutions = new ArrayList<>();
 
         while (hasco.hasNext()) {
-            System.out.println("one event");
             try {
                 IAlgorithmEvent e = hasco.nextWithException();
                 if (e instanceof HASCOSolutionEvent) {
@@ -125,9 +124,18 @@ public class EpicPerformanceMeasurer {
             }
         }
 
-        System.out.println(solutions.size());
+        HASCOSolutionCandidate<Double> solution = solutions.get(0);
+        for (HASCOSolutionCandidate<Double> s : solutions) {
+            if (s.getScore() > solution.getScore())
+                solution = s;
+        }
 
-        //System.out.println("sol.: " + solution.getComponentInstance().toString() + " with score: " + solution.getScore());
+        writeToDatabase(new BenchmarkResult(
+                DATASET_NAMES.get(i),
+                Algos.HASCO,
+                solution.getScore(), // equal to error rate here
+                j
+        ));
     }
 
     private void runMLPlan(ILabeledDataset ds, int i, int j) throws IOException, SplitFailedException, InterruptedException, DatasetDeserializationFailedException, URISyntaxException {
