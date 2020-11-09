@@ -6,13 +6,13 @@ public class BenchmarkResult {
     public String datasetSource;
     public Algos algorithm;
     public Double errorRate;
-    public String serializedComponentInstance;
+    public Integer repetition;
 
-    public BenchmarkResult(String datasetSource, Algos algorithm, Double errorRate, String serializedComponentInstance) {
+    public BenchmarkResult(String datasetSource, Algos algorithm, Double errorRate, Integer repetition) {
         this.datasetSource = datasetSource;
         this.algorithm = algorithm;
         this.errorRate = errorRate;
-        this.serializedComponentInstance = serializedComponentInstance;
+        this.repetition = repetition;
     }
 }
 
