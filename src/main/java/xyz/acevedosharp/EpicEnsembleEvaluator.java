@@ -7,6 +7,7 @@ import weka.classifiers.Classifier;
 import ai.libs.jaicore.ml.weka.WekaUtil;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.UnsupportedAttributeTypeException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -33,9 +34,13 @@ public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance
             List<Classifier> classifiers = new ArrayList<>();
 
             for (IComponentInstance nestedComponent : nestedComponents) {
-                Classifier classifier = (Classifier) Class.forName(nestedComponent.getComponent().getName()).newInstance();
-                classifier.buildClassifier(split.get(0));
-                classifiers.add(classifier);
+                try {
+                    Classifier classifier = (Classifier) Class.forName(nestedComponent.getComponent().getName()).newInstance();
+                    classifier.buildClassifier(split.get(0));
+                    classifiers.add(classifier);
+                } catch (UnsupportedAttributeTypeException e) {
+                    System.out.println("Ignored component: " + nestedComponent.getComponent().getName() + " from ensemble.");
+                }
             }
 
             int mistakes = 0;
@@ -70,6 +75,6 @@ public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance
         } catch (Exception e) {
             System.out.println("Ignored ensemble with message " + e.getMessage());
         }
-        return Double.MAX_VALUE; // disqualify if an exception was thrown
+        return Double.MAX_VALUE; // disqualify ensemble if something weird happens...
     }
 }

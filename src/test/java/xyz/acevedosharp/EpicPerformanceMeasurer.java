@@ -16,17 +16,20 @@ import ai.libs.hasco.core.HASCOSolutionCandidate;
 import org.api4.java.algorithm.Timeout;
 
 import org.api4.java.algorithm.events.IAlgorithmEvent;
+import org.api4.java.algorithm.exceptions.AlgorithmException;
+import org.api4.java.algorithm.exceptions.AlgorithmExecutionCanceledException;
+import org.api4.java.algorithm.exceptions.AlgorithmTimeoutedException;
 import org.api4.java.common.attributedobjects.IObjectEvaluator;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.stream.Collectors;
 
-@SuppressWarnings("UnusedLabel")
+@SuppressWarnings({"UnusedLabel", "unchecked", "ConstantConditions", "rawtypes", "ForLoopReplaceableByForEach"})
 public class EpicPerformanceMeasurer {
 
-    private static final List<String> DATASET_NAMES = List.of("datasets/iris.arff");
-    private static final Timeout TIMEOUT = new Timeout(180, TimeUnit.SECONDS);
+    private static final List<String> DATASET_NAMES = Arrays.asList("datasets/iris.arff");
+    private static final Timeout TIMEOUT = new Timeout(16, TimeUnit.SECONDS);
 
     @Test
     public void epicRunner() throws IOException, URISyntaxException {
@@ -77,7 +80,7 @@ public class EpicPerformanceMeasurer {
     }
 
     @Test
-    public void runWithHasco() throws URISyntaxException, IOException {
+    public void runWithHasco() throws URISyntaxException, IOException, AlgorithmTimeoutedException {
         List<File> datasets = datasetsAsFiles();
 
         for (int i = 0; i < datasets.size(); i++) {
@@ -100,29 +103,32 @@ public class EpicPerformanceMeasurer {
 
             hasco.setTimeout(TIMEOUT);
 
-            List<HASCOSolutionCandidate<Double>> solutionCandidates = new ArrayList<>();
+
+            ArrayList<HASCOSolutionCandidate<Double>> solutions = new ArrayList<>();
 
             while (hasco.hasNext()) {
                 try {
-                    IAlgorithmEvent event = hasco.nextWithException();
-                    if (event instanceof HASCOSolutionEvent) {
-                        HASCOSolutionCandidate<Double> solution = ((HASCOSolutionEvent<Double>) event).getSolutionCandidate();
-                        solutionCandidates.add(solution);
+                    IAlgorithmEvent e = hasco.nextWithException();
+                    if (e instanceof HASCOSolutionEvent) {
+                        @SuppressWarnings("unchecked")
+                        HASCOSolutionCandidate<Double> s = ((HASCOSolutionEvent<Double>) e).getSolutionCandidate();
+                        solutions.add(s);
                     }
-                } catch (Exception e) {
+                } catch (AlgorithmTimeoutedException ex) {
                     break;
+                } catch (InterruptedException | AlgorithmExecutionCanceledException | AlgorithmException exx) {
+                    exx.printStackTrace();
                 }
             }
-            solutionCandidates.sort((o1, o2) -> (int) (o2.getScore() - o1.getScore()));
-            HASCOSolutionCandidate<Double> solution = solutionCandidates.get(0);
 
-            System.out.println("sol.: " + solution.getComponentInstance().toString() + " with score: " + solution.getScore());
+            System.out.println(solutions.size());
+
+            //System.out.println("sol.: " + solution.getComponentInstance().toString() + " with score: " + solution.getScore());
         }
     }
 
     @Test
     public void runWithMLPlan() {
-
     }
 
     private List<File> datasetsAsFiles() {
