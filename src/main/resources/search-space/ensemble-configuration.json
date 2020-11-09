@@ -1,0 +1,22 @@
+{
+  "repository": "MyEnsemble",
+  "components": [
+    {
+      "name": "ensemble",
+      "requiredInterface": [
+        {
+          "id": "classifiers",
+          "name": "AbstractClassifier",
+          "min": 3,
+          "max": 11
+        }
+      ],
+      "providedInterface": [ "EpicEnsemble" ],
+      "parameters" : []
+    }
+
+  ],
+  "include": [
+    "weka-classifiers.json"
+  ]
+}
