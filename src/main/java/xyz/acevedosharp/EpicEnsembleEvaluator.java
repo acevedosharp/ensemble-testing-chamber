@@ -2,15 +2,14 @@ package xyz.acevedosharp;
 
 import ai.libs.jaicore.components.api.IComponentInstance;
 import ai.libs.jaicore.components.model.ComponentInstance;
+import ai.libs.jaicore.ml.weka.classification.learner.IWekaClassifier;
 import ai.libs.jaicore.ml.weka.dataset.WekaInstances;
 import org.api4.java.ai.ml.core.dataset.splitter.SplitFailedException;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledDataset;
 import org.api4.java.common.attributedobjects.IObjectEvaluator;
-import weka.classifiers.Classifier;
 import ai.libs.jaicore.ml.weka.WekaUtil;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.UnsupportedAttributeTypeException;
 
 import java.util.*;
 
@@ -28,23 +27,10 @@ public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance
     @Override
     public Double evaluate(ComponentInstance ensemble) {
         List<IComponentInstance> nestedComponents = ensemble.getSatisfactionOfRequiredInterface("classifiers");
-        List<Classifier> classifiers = new ArrayList<>();
 
-        for (IComponentInstance nestedComponent : nestedComponents) {
-            try {
-                Classifier classifier = (Classifier) Class.forName(nestedComponent.getComponent().getName()).newInstance();
-                classifier.buildClassifier(split.get(0));
-                classifiers.add(classifier);
-            } catch (UnsupportedAttributeTypeException e) {
-                // do nothing. This is for skipping classifiers that don't work on the dataset.
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        EpicEnsemble epicEnsemble = null;
+        IWekaClassifier epicEnsemble = null;
         try {
-            epicEnsemble = new EpicEnsemble(classifiers, split.get(0));
+            epicEnsemble =
         } catch (Exception e) {
             e.printStackTrace();
         }

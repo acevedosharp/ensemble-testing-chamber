@@ -52,6 +52,14 @@ public class EpicPerformanceMeasurer {
     private static final List<String> DATASET_NAMES = Arrays.asList("datasets/iris.arff");
     private static final Timeout TIMEOUT = new Timeout(240, TimeUnit.SECONDS);
     private static final int REPETITIONS = 2;
+    private static final EnsembleFactory ENSEMBLE_FACTORY = new EnsembleFactory();
+
+    @Test
+    public void testMaxMemory() {
+        System.out.println("Total mem: " + Runtime.getRuntime().totalMemory());
+        System.out.println("Max mem: " + Runtime.getRuntime().maxMemory());
+        System.out.println("Free mem: " + Runtime.getRuntime().freeMemory());
+    }
 
     @Test
     public void epicHascoRunner() throws Exception {
@@ -148,11 +156,7 @@ public class EpicPerformanceMeasurer {
                 solution = s;
         }
 
-        // transform solution into IWekaClassifier
-        // very wasteful and not DRY, but it's okay since this happens outside of HASCO's runtime and doesn't affect the timeout.
         Instances instances = new WekaInstances(dataset).getInstances();
-        List<IComponentInstance> nestedComponents = solution.getComponentInstance().getSatisfactionOfRequiredInterface("classifiers");
-        List<Classifier> classifiers = new ArrayList<>();
 
         for (IComponentInstance nestedComponent : nestedComponents) {
             try {
@@ -165,11 +169,8 @@ public class EpicPerformanceMeasurer {
                 e.printStackTrace();
             }
         }
-
-        EpicEnsemble epicEnsemble = new EpicEnsemble(classifiers, instances);
-
-        System.out.println("Execution of HASCO ended at "+ LocalDateTime.now()+".");
-        return new WekaClassifier(epicEnsemble);
+        Classifier resultingEnsemble = ENSEMBLE_FACTORY.getEnsemble(solution.getComponentInstance());
+        return new WekaClassifier(resultingEnsemble);
     }
 
     private IWekaClassifier runMLPlan(ILabeledDataset dataset) throws IOException, InterruptedException, AlgorithmExecutionCanceledException, AlgorithmTimeoutedException, AlgorithmException {

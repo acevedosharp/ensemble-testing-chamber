@@ -5,15 +5,15 @@ plugins {
 group 'xyz.acevedosharp'
 version '1.0'
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
+sourceCompatibility = 11
+targetCompatibility = 11
 
 repositories {
     mavenCentral()
     maven { url "https://jitpack.io" }
     maven { url "https://clojars.org/repo/" }
     maven { url "https://plugins.gradle.org/m2/" }
-    maven {url "https://nexus.cs.upb.de/repository/maven-releases/"}
+    maven { url "https://nexus.cs.upb.de/repository/maven-releases/" }
 }
 
 dependencies {
