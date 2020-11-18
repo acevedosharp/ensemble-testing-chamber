@@ -1,7 +1,6 @@
 package xyz.acevedosharp;
 
 import ai.libs.hasco.core.events.HASCOSolutionEvent;
-import ai.libs.jaicore.components.api.IComponentInstance;
 import ai.libs.jaicore.components.model.ComponentInstance;
 import ai.libs.jaicore.components.model.RefinementConfiguredSoftwareConfigurationProblem;
 
@@ -9,6 +8,7 @@ import java.io.*;
 import java.net.URISyntaxException;
 import java.sql.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -16,20 +16,16 @@ import ai.libs.hasco.builder.HASCOBuilder;
 import ai.libs.hasco.builder.forwarddecomposition.HASCOViaFD;
 import ai.libs.hasco.core.HASCOSolutionCandidate;
 
-import ai.libs.jaicore.ml.classification.loss.dataset.EClassificationPerformanceMeasure;
 import ai.libs.jaicore.ml.core.dataset.serialization.ArffDatasetAdapter;
-import ai.libs.jaicore.ml.core.evaluation.evaluator.SupervisedLearnerExecutor;
 import ai.libs.jaicore.ml.core.filter.SplitterUtil;
 import ai.libs.jaicore.ml.weka.classification.learner.IWekaClassifier;
 import ai.libs.jaicore.ml.weka.classification.learner.WekaClassifier;
 import ai.libs.jaicore.ml.weka.dataset.WekaInstances;
 import ai.libs.mlplan.weka.MLPlanWekaBuilder;
 
-import org.api4.java.ai.ml.classification.singlelabel.evaluation.ISingleLabelClassification;
 import org.api4.java.ai.ml.core.dataset.serialization.DatasetDeserializationFailedException;
 import org.api4.java.ai.ml.core.dataset.splitter.SplitFailedException;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledDataset;
-import org.api4.java.ai.ml.core.evaluation.execution.ILearnerRunReport;
 import org.api4.java.ai.ml.core.evaluation.execution.LearnerExecutionFailedException;
 import org.api4.java.algorithm.Timeout;
 
@@ -41,7 +37,6 @@ import org.api4.java.common.attributedobjects.IObjectEvaluator;
 import org.junit.Test;
 import weka.classifiers.Classifier;
 import weka.core.Instances;
-import weka.core.UnsupportedAttributeTypeException;
 
 import java.io.File;
 import java.util.stream.Collectors;
@@ -49,10 +44,10 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"unchecked", "ConstantConditions", "rawtypes"})
 public class EpicPerformanceMeasurer {
 
-    private static final List<String> DATASET_NAMES = Arrays.asList("datasets/iris.arff");
-    private static final Timeout TIMEOUT = new Timeout(240, TimeUnit.SECONDS);
+    private static final List<String> DATASET_NAMES = Arrays.asList("datasets/madelon.arff");
+    private static final Timeout TIMEOUT = new Timeout(90, TimeUnit.SECONDS);
     private static final int REPETITIONS = 2;
-    private static final EnsembleFactory ENSEMBLE_FACTORY = new EnsembleFactory();
+    private static final EpicEnsembleFactory ENSEMBLE_FACTORY = new EpicEnsembleFactory();
 
     @Test
     public void testMaxMemory() {
@@ -73,7 +68,7 @@ public class EpicPerformanceMeasurer {
                 IWekaClassifier result = runHasco(split.get(0),i , j);
 
                 // evaluate its result
-                Double performance = measureAlgorithmPerformance(result, split.get(1));
+                Double performance = EpicEnsembleEvaluator.measureAlgorithmPerformance(result, split.get(1));
 
                 // write result to database
                 writeToDatabase(new BenchmarkResult(
@@ -98,7 +93,7 @@ public class EpicPerformanceMeasurer {
                 IWekaClassifier optimizedClassifier = runMLPlan(split.get(0));
 
                 // evaluate its result with .3
-                Double performance = measureAlgorithmPerformance(optimizedClassifier, split.get(1));
+                Double performance = EpicEnsembleEvaluator.measureAlgorithmPerformance(optimizedClassifier, split.get(1));
 
                 // SUGGESTION: store results for every classifier and compare that against the ensemble
 
@@ -114,7 +109,7 @@ public class EpicPerformanceMeasurer {
     }
 
     private IWekaClassifier runHasco(ILabeledDataset dataset, int i, int j) throws Exception {
-        System.out.println("Execution of HASCO #"+j+" on dataset: "+ DATASET_NAMES.get(i) + " began at "+ LocalDateTime.now()+".");
+        System.out.println("Execution of HASCO #"+j+" on dataset: "+ DATASET_NAMES.get(i) + " began at "+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))+".");
 
         String reqInterface = "EpicEnsemble";
         File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
@@ -127,7 +122,7 @@ public class EpicPerformanceMeasurer {
         HASCOViaFD<Double> hasco = HASCOBuilder.get()
                 .withProblem(problem)
                 .withBestFirst()
-                .withCPUs(2)
+                .withCPUs(3)
                 .withTimeout(TIMEOUT)
                 .withRandomCompletions()
                 .withDefaultParametrizationsFirst()
@@ -158,19 +153,8 @@ public class EpicPerformanceMeasurer {
 
         Instances instances = new WekaInstances(dataset).getInstances();
 
-        for (IComponentInstance nestedComponent : nestedComponents) {
-            try {
-                Classifier classifier = (Classifier) Class.forName(nestedComponent.getComponent().getName()).newInstance();
-                classifier.buildClassifier(instances);
-                classifiers.add(classifier);
-            } catch (UnsupportedAttributeTypeException e) {
-                System.out.println("Ignored component: " + nestedComponent.getComponent().getName() + " from ensemble.");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        Classifier resultingEnsemble = ENSEMBLE_FACTORY.getEnsemble(solution.getComponentInstance());
-        return new WekaClassifier(resultingEnsemble);
+        IWekaClassifier resultingEnsemble = ENSEMBLE_FACTORY.getEnsemble(solution.getComponentInstance(), instances);
+        return resultingEnsemble;
     }
 
     private IWekaClassifier runMLPlan(ILabeledDataset dataset) throws IOException, InterruptedException, AlgorithmExecutionCanceledException, AlgorithmTimeoutedException, AlgorithmException {
@@ -190,12 +174,6 @@ public class EpicPerformanceMeasurer {
                     return null; // shouldn't happen
                 }
         ).collect(Collectors.toList());
-    }
-
-    private Double measureAlgorithmPerformance(IWekaClassifier optimizedClassifier, ILabeledDataset dataset) throws LearnerExecutionFailedException {
-        SupervisedLearnerExecutor executor = new SupervisedLearnerExecutor();
-        ILearnerRunReport report = executor.execute(optimizedClassifier, dataset); // 0.3 from runner
-        return EClassificationPerformanceMeasure.ERRORRATE.loss(report.getPredictionDiffList().getCastedView(Integer.class, ISingleLabelClassification.class));
     }
 
     @SuppressWarnings("SqlResolve")
