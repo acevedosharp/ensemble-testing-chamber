@@ -1,62 +1,58 @@
 package xyz.acevedosharp;
 
-import ai.libs.hasco.core.events.HASCOSolutionEvent;
-import ai.libs.jaicore.components.model.ComponentInstance;
-import ai.libs.jaicore.components.model.RefinementConfiguredSoftwareConfigurationProblem;
-
-import java.io.*;
-import java.net.URISyntaxException;
-import java.sql.*;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
-
 import ai.libs.hasco.builder.HASCOBuilder;
 import ai.libs.hasco.builder.forwarddecomposition.HASCOViaFD;
 import ai.libs.hasco.core.HASCOSolutionCandidate;
-
+import ai.libs.hasco.core.events.HASCOSolutionEvent;
+import ai.libs.jaicore.components.model.ComponentInstance;
+import ai.libs.jaicore.components.model.RefinementConfiguredSoftwareConfigurationProblem;
 import ai.libs.jaicore.ml.core.dataset.serialization.ArffDatasetAdapter;
 import ai.libs.jaicore.ml.core.filter.SplitterUtil;
 import ai.libs.jaicore.ml.weka.classification.learner.IWekaClassifier;
-import ai.libs.jaicore.ml.weka.classification.learner.WekaClassifier;
-import ai.libs.jaicore.ml.weka.dataset.WekaInstances;
 import ai.libs.mlplan.weka.MLPlanWekaBuilder;
-
 import org.api4.java.ai.ml.core.dataset.serialization.DatasetDeserializationFailedException;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledDataset;
 import org.api4.java.algorithm.Timeout;
-
 import org.api4.java.algorithm.events.IAlgorithmEvent;
 import org.api4.java.algorithm.exceptions.AlgorithmException;
 import org.api4.java.algorithm.exceptions.AlgorithmExecutionCanceledException;
 import org.api4.java.algorithm.exceptions.AlgorithmTimeoutedException;
 import org.api4.java.common.attributedobjects.IObjectEvaluator;
-import org.junit.Test;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@SuppressWarnings({"unchecked", "ConstantConditions", "rawtypes"})
-public class EpicPerformanceMeasurer {
+@SuppressWarnings({"rawtypes", "unchecked", "ConstantConditions"})
+public class EpicExecutor {
+    private final List<String> DATASET_NAMES;
+    private final Timeout TIMEOUT;
+    private final int REPETITIONS;
+    private final int CORES;
 
-    private static final List<String> DATASET_NAMES = Arrays.asList("datasets/iris.arff");
-    private static final Timeout TIMEOUT = new Timeout(600, TimeUnit.SECONDS);
-    private static final int REPETITIONS = 1;
-    private static final int CORES = 3;
-    @Test
-    public void testMaxMemory() {
+    public EpicExecutor(List<String> datasets, int minutes, int repetitions, int cores) {
+        DATASET_NAMES = datasets;
+        TIMEOUT = new Timeout(minutes, TimeUnit.MINUTES);
+        REPETITIONS = repetitions;
+        CORES = cores;
     }
 
-    @Test
     public void runBoth() throws Exception {
-        System.out.println("Max memory" + Runtime.getRuntime().maxMemory());
-        epicHascoRunner();
-        epicMLPlanRunner();
+        callHascoRunner();
+        callMLPlanRunner();
     }
 
-    @Test
-    public void epicHascoRunner() throws Exception {
+    public void callHascoRunner() throws Exception {
         List<ILabeledDataset<?>> datasets = loadLabeledDatasets();
         for (int datasetIndex = 0; datasetIndex < DATASET_NAMES.size(); datasetIndex++) {
             for (int repetition = 1; repetition <= REPETITIONS; repetition++) {
@@ -67,7 +63,7 @@ public class EpicPerformanceMeasurer {
                 ILabeledDataset testSet = split.get(1);
 
                 // run the algorithm with .7 from above
-                IWekaClassifier result = runHasco(trainSet, datasetIndex, repetition);
+                IWekaClassifier result = callHascoRunner(trainSet, datasetIndex, repetition);
 
                 // evaluate its result
                 Double performance = EpicEnsembleEvaluator.measureAlgorithmPerformance(result, trainSet, testSet);
@@ -83,8 +79,7 @@ public class EpicPerformanceMeasurer {
         }
     }
 
-    @Test
-    public void epicMLPlanRunner() throws Exception {
+    public void callMLPlanRunner() throws Exception {
         List<ILabeledDataset<?>> datasets = loadLabeledDatasets();
         for (int datasetIndex = 0; datasetIndex < DATASET_NAMES.size(); datasetIndex++) {
             for (int repetition = 1; repetition <= REPETITIONS; repetition++) {
@@ -92,7 +87,7 @@ public class EpicPerformanceMeasurer {
                 List<ILabeledDataset> split = SplitterUtil.getLabelStratifiedTrainTestSplit(datasets.get(datasetIndex), repetition, .7);
 
                 // run the algorithm with .7 from above
-                IWekaClassifier optimizedClassifier = runMLPlan(split.get(0));
+                IWekaClassifier optimizedClassifier = callMLPlanRunner(split.get(0));
 
                 // evaluate its result with .3
                 Double performance = EpicEnsembleEvaluator.measureAlgorithmPerformance(optimizedClassifier, split.get(0), split.get(1));
@@ -110,11 +105,11 @@ public class EpicPerformanceMeasurer {
         }
     }
 
-    private IWekaClassifier runHasco(ILabeledDataset dataset, int datasetIndex, int repetition) throws Exception {
+    private IWekaClassifier callHascoRunner(ILabeledDataset dataset, int datasetIndex, int repetition) throws Exception {
         System.out.println("Execution of HASCO #"+repetition+" on dataset: "+ DATASET_NAMES.get(datasetIndex) + " began at "+ LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))+".");
 
         String reqInterface = "EpicEnsemble";
-        File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
+        File componentFile = new File("search-space/ensemble-configuration.json");
 
         IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition);
 
@@ -156,7 +151,7 @@ public class EpicPerformanceMeasurer {
         return EpicEnsembleFactory.getEnsemble(solution.getComponentInstance());
     }
 
-    private IWekaClassifier runMLPlan(ILabeledDataset dataset) throws IOException, InterruptedException, AlgorithmExecutionCanceledException, AlgorithmTimeoutedException, AlgorithmException {
+    private IWekaClassifier callMLPlanRunner(ILabeledDataset dataset) throws IOException, InterruptedException, AlgorithmExecutionCanceledException, AlgorithmTimeoutedException, AlgorithmException {
         // train with the entire dataset (0.7 from runner), the split and benchmarking is handled in the runner.
         return new MLPlanWekaBuilder().withNumCpus(CORES).withTimeOut(TIMEOUT).withDataset(dataset).build().call();
     }
@@ -165,9 +160,9 @@ public class EpicPerformanceMeasurer {
         return DATASET_NAMES.stream().map(
                 s -> {
                     try {
-                        File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
+                        File dsFile = new File(s);
                         return ArffDatasetAdapter.readDataset(dsFile);
-                    } catch (DatasetDeserializationFailedException | URISyntaxException e) {
+                    } catch (DatasetDeserializationFailedException e) {
                         e.printStackTrace();
                     }
                     return null; // shouldn't happen

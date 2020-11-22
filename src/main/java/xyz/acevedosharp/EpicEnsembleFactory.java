@@ -5,10 +5,7 @@ import ai.libs.jaicore.components.model.ComponentInstance;
 import ai.libs.jaicore.ml.weka.classification.learner.IWekaClassifier;
 import ai.libs.jaicore.ml.weka.classification.learner.WekaClassifier;
 import weka.classifiers.Classifier;
-import weka.core.Instances;
 import weka.core.OptionHandler;
-import weka.core.UnsupportedAttributeTypeException;
-import weka.core.Utils;
 
 import java.util.ArrayList;
 import java.util.List;

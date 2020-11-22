@@ -1,22 +1,13 @@
 package xyz.acevedosharp;
 
 import ai.libs.jaicore.components.model.ComponentInstance;
-import ai.libs.jaicore.ml.classification.loss.dataset.EClassificationPerformanceMeasure;
-import ai.libs.jaicore.ml.classification.singlelabel.SingleLabelClassification;
-import ai.libs.jaicore.ml.core.evaluation.evaluator.SupervisedLearnerExecutor;
 import ai.libs.jaicore.ml.core.filter.SplitterUtil;
 import ai.libs.jaicore.ml.weka.classification.learner.IWekaClassifier;
-import ai.libs.jaicore.ml.weka.classification.learner.WekaClassifier;
-import ai.libs.jaicore.ml.weka.dataset.WekaInstance;
 import ai.libs.jaicore.ml.weka.dataset.WekaInstances;
-import org.api4.java.ai.ml.classification.singlelabel.evaluation.ISingleLabelClassification;
+
 import org.api4.java.ai.ml.core.dataset.splitter.SplitFailedException;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledDataset;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledInstance;
-import org.api4.java.ai.ml.core.evaluation.IPrediction;
-import org.api4.java.ai.ml.core.evaluation.execution.ILearnerRunReport;
-import org.api4.java.ai.ml.core.evaluation.execution.LearnerExecutionFailedException;
-import org.api4.java.ai.ml.core.exception.TrainingException;
 import org.api4.java.common.attributedobjects.IObjectEvaluator;
 import weka.core.Instance;
 import weka.core.Instances;
