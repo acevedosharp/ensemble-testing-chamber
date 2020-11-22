@@ -1,7 +1,6 @@
 package xyz.acevedosharp;
 
 import weka.classifiers.Classifier;
-import weka.classifiers.rules.M5Rules;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -18,20 +17,29 @@ public class EpicEnsemble implements Classifier {
 
     @Override
     public void buildClassifier(Instances data) {
+        long start = System.currentTimeMillis();
+        System.out.println("Triggered ensemble build!");
+
         List<Integer> delList = new ArrayList<>();
 
-        for (int i = classifiers.size() - 1; i != 0; i--) { // iterate backwards so that no need to sort delList
+        // build every classifier in composition and not include ones that don't support problem type
+        for (int i = classifiers.size() - 1; i >= 0; i--) { // iterate backwards so that no need to sort delList
             try {
                 classifiers.get(i).buildClassifier(data);
             } catch (Exception e) {
-                System.out.println("Ignored " + classifiers.get(i).getClass().toString());
                 delList.add(i);
             }
         }
 
+        // remove from classifiers those who could not be built
         for (Integer index : delList) {
             classifiers.remove((int) index);
         }
+        System.out.println("Resulting ensemble: ");
+        for (int i = 0; i < classifiers.size(); i++) {
+            System.out.println("\t" + i + ") " + classifiers.get(i).getClass().getName());
+        }
+        System.out.println("Build took " + (System.currentTimeMillis() - start) + "ms");
     }
 
     @Override
@@ -54,33 +62,15 @@ public class EpicEnsemble implements Classifier {
                 if (entry.getValue() > classPredictions.get(ensemblePrediction))
                     ensemblePrediction = entry.getKey();
         }
-
         return ensemblePrediction;
     }
 
     @Override
-    public double[] distributionForInstance(Instance instance) throws Exception {
-        double[] doubles = new double[instance.numClasses()];
-
-        for (Classifier classifier : classifiers) {
-            double[] dist = null;
-            try {
-                 dist = classifier.distributionForInstance(instance);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            for (int i = 0; i < dist.length; i++) {
-                doubles[i] += dist[i];
-            }
-        }
-
-        for (int i = 0; i < doubles.length; i++) {
-            doubles[i] /= instance.numClasses();
-        }
-
-        return doubles;
+    public double[] distributionForInstance(Instance instance) {
+        return null;
     }
 
+    // we're not going to use this
     @Override
     public Capabilities getCapabilities() {
         return null;

@@ -8,22 +8,17 @@ import weka.classifiers.Classifier;
 import weka.core.Instances;
 import weka.core.OptionHandler;
 import weka.core.UnsupportedAttributeTypeException;
+import weka.core.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class EpicEnsembleFactory {
-
-    public static IWekaClassifier getEnsemble(ComponentInstance ensemble, Instances instances) {
+    public static IWekaClassifier getEnsemble(ComponentInstance ensemble) {
         long start = System.currentTimeMillis();
 
         List<IComponentInstance> nestedComponents = ensemble.getSatisfactionOfRequiredInterface("classifiers");
-
-        for (IComponentInstance ci : nestedComponents) {
-            System.out.println("\t" + ci.getComponent().getName());
-        }
-
         List<Classifier> classifiers = new ArrayList<>();
 
         for (IComponentInstance component : nestedComponents) {
@@ -44,8 +39,8 @@ public class EpicEnsembleFactory {
                 }
                 ((OptionHandler) classifier).setOptions(parameters.toArray(new String[0]));
 
-                // build the classifier
                 classifiers.add(classifier);
+                System.out.println("loaded classifier " + classifier.getClass() + " with params " + parameters);
             } catch (Exception e) {
                 e.printStackTrace();
             }
