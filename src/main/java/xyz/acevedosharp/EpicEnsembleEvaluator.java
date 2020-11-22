@@ -61,6 +61,6 @@ public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance
         System.out.println("===================================================");
         return score;
     }
-    // 1602 -> 12226 -> 23454 -> 235461
+    // 1602 -> 12226 -> 23454 -> 235461 this rising behavior only happens with larger datasets
     // 161 -> 195 -> 25 -> 344 -> 140 -> 323
 }

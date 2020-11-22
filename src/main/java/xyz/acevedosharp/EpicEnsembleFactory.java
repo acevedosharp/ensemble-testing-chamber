@@ -34,7 +34,7 @@ public class EpicEnsembleFactory {
                             parameters.add("-" + pair.getKey());
                         }
                         else if (value.equals("false")) {} // do nothing
-                        else {// normall parameter (not boolean)
+                        else {// normal parameter (not boolean)
                             parameters.add("-" + pair.getKey());
                             parameters.add(value);
                         }

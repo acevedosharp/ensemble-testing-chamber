@@ -7,6 +7,7 @@ create table benchmarkresult
 	repetition int not null,
 	moment_saved bigint not null,
 	date_string varchar(100) not null,
+	serialized_solution text not null,
 	constraint benchmarkresult_pk
 		primary key (id)
 );

@@ -19,8 +19,6 @@ public class EpicEnsemble implements Classifier {
     @Override
     public void buildClassifier(Instances data) {
         long start = System.currentTimeMillis();
-        System.out.println("Triggered ensemble build!");
-
         List<Integer> delList = new ArrayList<>();
 
         // build every classifier in composition and not include ones that don't support problem type
@@ -36,11 +34,12 @@ public class EpicEnsemble implements Classifier {
         for (Integer index : delList) {
             classifiers.remove((int) index);
         }
+
         System.out.println("Resulting ensemble: ");
         for (int i = 0; i < classifiers.size(); i++) {
             System.out.println("\t" + i + ") " + classifiers.get(i).getClass().getName());
         }
-        System.out.println("Build took " + (System.currentTimeMillis() - start) + "ms");
+        System.out.println("Building it took " + (System.currentTimeMillis() - start) + "ms");
     }
 
     @Override
@@ -76,5 +75,21 @@ public class EpicEnsemble implements Classifier {
     @Override
     public Capabilities getCapabilities() {
         return null;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        classifiers.forEach(
+                classifier -> sb
+                        .append(classifier.getClass().getName())
+                        .append(", ")
+        );
+
+        sb.deleteCharAt(sb.length()-1);
+        sb.deleteCharAt(sb.length()-1);
+
+        return sb.toString();
     }
 }
