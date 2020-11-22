@@ -173,7 +173,9 @@ public class EpicExecutor {
     @SuppressWarnings("SqlResolve")
     private void writeToDatabase(BenchmarkResult result) throws SQLException {
         Connection connection = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306/epic", "root", "password"
+                "jdbc:mysql://104.154.196.42:3306/epic",
+                "root",
+                "bxFt2KbBasDprJPo"
         );
         Statement statement = connection.createStatement();
 
