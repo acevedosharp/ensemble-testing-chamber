@@ -21,7 +21,6 @@ public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance
     //private final List<Instances> splitInstances;
 
     public EpicEnsembleEvaluator(ILabeledDataset dataset, Integer seed) throws SplitFailedException, InterruptedException {
-
         // make split
         List<ILabeledDataset> split = SplitterUtil.getLabelStratifiedTrainTestSplit(dataset, seed, .7);
 

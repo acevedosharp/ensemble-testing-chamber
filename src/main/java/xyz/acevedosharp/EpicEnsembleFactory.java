@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("StatementWithEmptyBody")
 public class EpicEnsembleFactory {
     public static IWekaClassifier getEnsemble(ComponentInstance ensemble) {
         long start = System.currentTimeMillis();
@@ -28,10 +29,15 @@ public class EpicEnsembleFactory {
                 for (Map.Entry<String, String> pair : component.getParameterValues().entrySet()) {
                     // exclude parameters whose name is not a one character flag
                     if (pair.getKey().length() == 1) {
-                        parameters.add("-" + pair.getKey());
                         String value = pair.getValue();
-                        if (!(value.equals("true") || value.equals("false")))
+                        if (value.equals("true")) {
+                            parameters.add("-" + pair.getKey());
+                        }
+                        else if (value.equals("false")) {} // do nothing
+                        else {// normall parameter (not boolean)
+                            parameters.add("-" + pair.getKey());
                             parameters.add(value);
+                        }
                     }
                 }
                 ((OptionHandler) classifier).setOptions(parameters.toArray(new String[0]));

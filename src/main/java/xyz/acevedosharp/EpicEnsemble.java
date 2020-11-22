@@ -7,6 +7,7 @@ import weka.core.Instances;
 
 import java.util.*;
 
+@SuppressWarnings("ConstantConditions")
 public class EpicEnsemble implements Classifier {
     private final List<Classifier> classifiers;
 
@@ -56,7 +57,7 @@ public class EpicEnsemble implements Classifier {
         }
 
         // find most frequent prediction and use it as the ensemble's prediction (hard voting)
-        Double ensemblePrediction = classPredictions.entrySet().iterator().next().getKey(); // first key
+        Double ensemblePrediction = classPredictions.entrySet().iterator().next().getKey(); // first key by default
         for (Map.Entry<Double, Integer> entry : classPredictions.entrySet()) {
             if (!entry.getKey().equals(ensemblePrediction))
                 if (entry.getValue() > classPredictions.get(ensemblePrediction))
@@ -65,6 +66,7 @@ public class EpicEnsemble implements Classifier {
         return ensemblePrediction;
     }
 
+    // we're not going to use this
     @Override
     public double[] distributionForInstance(Instance instance) {
         return null;
