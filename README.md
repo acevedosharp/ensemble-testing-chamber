@@ -1,4 +1,5 @@
 # testing-chamber
+## Instructions to run on a 4 cores and 16gb machine
 Run the following commands and that's it! :)
 
 1. sudo apt update && sudo apt upgrade
@@ -11,8 +12,8 @@ Run the following commands and that's it! :)
 
 // For HASCO runner
 
-8.1. java -Xmx15G -jar testing-chamber-1.0.jar 60 5 4 true false datasets/dexter.arff datasets/madelon.arff datasets/dorothea.arff datasets/amazon-commerce-reviews.arff datasets/convex.arff
+8.1. java -Xmx14G -jar testing-chamber-1.0.jar 60 5 4 true false datasets/dexter.arff datasets/madelon.arff datasets/dorothea.arff datasets/amazon-commerce-reviews.arff datasets/convex.arff
 
 // For MLPlan runner
 
-8.2. java -Xmx15G -jar testing-chamber-1.0.jar 60 5 4 false true datasets/dexter.arff datasets/madelon.arff datasets/dorothea.arff datasets/amazon-commerce-reviews.arff datasets/convex.arff
+8.2. java -Xmx14G -jar testing-chamber-1.0.jar 60 5 4 false true datasets/dexter.arff datasets/madelon.arff datasets/dorothea.arff datasets/amazon-commerce-reviews.arff datasets/convex.arff
