@@ -119,8 +119,8 @@ public class EpicExecutor {
         EpicBooleanWrapper epicBooleanWrapper = new EpicBooleanWrapper();
 
         String reqInterface = "EpicEnsemble";
-        File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
-        //File componentFile = new File("search-space/ensemble-configuration.json");
+        //File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
+        File componentFile = new File("search-space/ensemble-configuration.json");
 
         IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition, epicBooleanWrapper);
 
@@ -178,10 +178,10 @@ public class EpicExecutor {
         return DATASET_NAMES.stream().map(
                 s -> {
                     try {
-                        File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
-                        //File dsFile = new File(s);
+                        //File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
+                        File dsFile = new File(s);
                         return ArffDatasetAdapter.readDataset(dsFile);
-                    } catch (DatasetDeserializationFailedException | URISyntaxException e) {
+                    } catch (DatasetDeserializationFailedException e) {
                         e.printStackTrace();
                     }
                     return null; // shouldn't happen
