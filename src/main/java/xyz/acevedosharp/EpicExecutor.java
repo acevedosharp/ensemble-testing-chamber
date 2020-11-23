@@ -43,7 +43,7 @@ public class EpicExecutor {
 
     public EpicExecutor(List<String> datasets, int minutes, int repetitions, int cores) {
         DATASET_NAMES = datasets;
-        TIMEOUT = new Timeout(minutes, TimeUnit.SECONDS);
+        TIMEOUT = new Timeout(minutes, TimeUnit.MINUTES);
         REPETITIONS = repetitions;
         CORES = cores;
     }
