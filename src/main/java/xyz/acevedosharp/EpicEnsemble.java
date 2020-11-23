@@ -1,6 +1,9 @@
 package xyz.acevedosharp;
 
+import org.api4.java.algorithm.exceptions.AlgorithmExecutionCanceledException;
+import org.api4.java.algorithm.exceptions.AlgorithmTimeoutedException;
 import weka.classifiers.Classifier;
+import weka.classifiers.trees.J48;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -17,15 +20,28 @@ public class EpicEnsemble implements Classifier {
     }
 
     @Override
-    public void buildClassifier(Instances data) {
+    public void buildClassifier(Instances data) throws InterruptedException {
         long start = System.currentTimeMillis();
+
+        if (Thread.interrupted()) {
+            throw new InterruptedException("Thread got interrupted, thus, kill WEKA.");
+        }
+
         List<Integer> delList = new ArrayList<>();
 
         // build every classifier in composition and not include ones that don't support problem type
         for (int i = classifiers.size() - 1; i >= 0; i--) { // iterate backwards so that no need to sort delList
             try {
+                if (Thread.interrupted()) {
+                    throw new InterruptedException("Thread got interrupted, thus, kill WEKA.");
+                }
                 classifiers.get(i).buildClassifier(data);
+                System.out.println("Building: " + classifiers.get(i).getClass().getName());
+            } catch(InterruptedException e) {
+                throw e;
             } catch (Exception e) {
+                System.out.println("YOOOOMOMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+                e.printStackTrace();
                 delList.add(i);
             }
         }

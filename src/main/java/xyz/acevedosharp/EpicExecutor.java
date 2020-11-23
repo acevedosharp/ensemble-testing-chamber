@@ -116,11 +116,13 @@ public class EpicExecutor {
     private IWekaClassifier runHasco(ILabeledDataset dataset, int datasetIndex, int repetition) throws Exception {
         System.out.println("Execution of HASCO #" + repetition + " on dataset: " + DATASET_NAMES.get(datasetIndex) + " began at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + ".");
 
-        String reqInterface = "EpicEnsemble";
-        //File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
-        File componentFile = new File("search-space/ensemble-configuration.json");
+        EpicBooleanWrapper epicBooleanWrapper = new EpicBooleanWrapper();
 
-        IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition);
+        String reqInterface = "EpicEnsemble";
+        File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
+        //File componentFile = new File("search-space/ensemble-configuration.json");
+
+        IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition, epicBooleanWrapper);
 
         RefinementConfiguredSoftwareConfigurationProblem<Double> problem =
                 new RefinementConfiguredSoftwareConfigurationProblem(componentFile, reqInterface, evaluator);
@@ -134,9 +136,13 @@ public class EpicExecutor {
                 .withDefaultParametrizationsFirst()
                 .getAlgorithm();
 
+        hasco.setTimeout(TIMEOUT); // make sure
+
         ArrayList<HASCOSolutionCandidate<Double>> solutions = new ArrayList<>();
 
-        while (hasco.hasNext()) {
+
+
+        while (hasco.hasNext() && epicBooleanWrapper.getMyBoolean()) {
             try {
                 IAlgorithmEvent e = hasco.nextWithException();
                 if (e instanceof HASCOSolutionEvent) {
@@ -144,12 +150,13 @@ public class EpicExecutor {
                     HASCOSolutionCandidate<Double> s = ((HASCOSolutionEvent<Double>) e).getSolutionCandidate();
                     solutions.add(s);
                 }
-            } catch (AlgorithmTimeoutedException ex) {
-                break;
-            } catch (InterruptedException | AlgorithmExecutionCanceledException | AlgorithmException exx) {
+            } catch (AlgorithmTimeoutedException | InterruptedException | AlgorithmExecutionCanceledException exx) {
                 exx.printStackTrace();
+                break;
             }
         }
+
+        System.out.println("SOLUTIONS'S SIZE: " + solutions.size());
 
         HASCOSolutionCandidate<Double> solution = solutions.get(0);
         for (HASCOSolutionCandidate<Double> s : solutions) {
@@ -171,10 +178,10 @@ public class EpicExecutor {
         return DATASET_NAMES.stream().map(
                 s -> {
                     try {
-                        //File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
-                        File dsFile = new File(s);
+                        File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
+                        //File dsFile = new File(s);
                         return ArffDatasetAdapter.readDataset(dsFile);
-                    } catch (DatasetDeserializationFailedException e) {
+                    } catch (DatasetDeserializationFailedException | URISyntaxException e) {
                         e.printStackTrace();
                     }
                     return null; // shouldn't happen

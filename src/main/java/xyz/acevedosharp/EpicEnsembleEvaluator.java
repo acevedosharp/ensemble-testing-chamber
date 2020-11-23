@@ -8,6 +8,8 @@ import ai.libs.jaicore.ml.weka.dataset.WekaInstances;
 import org.api4.java.ai.ml.core.dataset.splitter.SplitFailedException;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledDataset;
 import org.api4.java.ai.ml.core.dataset.supervised.ILabeledInstance;
+import org.api4.java.algorithm.exceptions.AlgorithmExecutionCanceledException;
+import org.api4.java.algorithm.exceptions.AlgorithmTimeoutedException;
 import org.api4.java.common.attributedobjects.IObjectEvaluator;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -18,15 +20,18 @@ import java.util.*;
 public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance, Double> {
     private final ILabeledDataset trainSet;
     private final ILabeledDataset testSet;
+    private final EpicBooleanWrapper epicBooleanWrapper;
     //private final List<Instances> splitInstances;
 
-    public EpicEnsembleEvaluator(ILabeledDataset dataset, Integer seed) throws SplitFailedException, InterruptedException {
+    public EpicEnsembleEvaluator(ILabeledDataset dataset, Integer seed, EpicBooleanWrapper epicBooleanWrapper) throws SplitFailedException, InterruptedException {
         // make split
         List<ILabeledDataset> split = SplitterUtil.getLabelStratifiedTrainTestSplit(dataset, seed, .7);
 
         // get train instances from split
         trainSet = split.get(0);
         testSet = split.get(1);
+
+        this.epicBooleanWrapper = epicBooleanWrapper;
     }
 
     @Override
@@ -34,7 +39,12 @@ public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance
         try {
             IWekaClassifier rawEnsemble = EpicEnsembleFactory.getEnsemble(ensemble);
             return measureAlgorithmPerformance(rawEnsemble, trainSet, testSet);
-        } catch (Exception e) {
+        } catch (AlgorithmTimeoutedException | InterruptedException | AlgorithmExecutionCanceledException exx) {
+            // throw exx; can't throw the exception! So better stop Hasco differently
+            epicBooleanWrapper.setMyBoolean(false);
+            return Double.MAX_VALUE;
+        }
+        catch (Exception e) {
             e.printStackTrace();
             return Double.MAX_VALUE;
         }
