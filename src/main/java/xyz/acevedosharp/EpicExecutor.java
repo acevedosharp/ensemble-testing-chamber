@@ -117,8 +117,8 @@ public class EpicExecutor {
         System.out.println("Execution of HASCO #" + repetition + " on dataset: " + DATASET_NAMES.get(datasetIndex) + " began at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + ".");
 
         String reqInterface = "EpicEnsemble";
-        File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
-        //File componentFile = new File("search-space/ensemble-configuration.json");
+        //File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
+        File componentFile = new File("search-space/ensemble-configuration.json");
 
         IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition);
 
@@ -177,10 +177,10 @@ public class EpicExecutor {
         return DATASET_NAMES.stream().map(
                 s -> {
                     try {
-                        File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
-                        //File dsFile = new File(s);
+                        //File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
+                        File dsFile = new File(s);
                         return ArffDatasetAdapter.readDataset(dsFile);
-                    } catch (DatasetDeserializationFailedException | URISyntaxException e) {
+                    } catch (DatasetDeserializationFailedException e) {
                         e.printStackTrace();
                     }
                     return null; // shouldn't happen

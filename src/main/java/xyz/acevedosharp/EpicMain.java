@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class EpicMain {
-    // minutes, repetitions, cores, runHasco, runMLPlan, datasets
+    // minutes, repetitions, cores, runHasco, runMLPlan, datasets...
     public static void main(String[] args) {
         System.out.println("Max mem: " + Runtime.getRuntime().maxMemory());
 
