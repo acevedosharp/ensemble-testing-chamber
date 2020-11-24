@@ -20,29 +20,28 @@ import java.util.*;
 public class EpicEnsembleEvaluator implements IObjectEvaluator<ComponentInstance, Double> {
     private final ILabeledDataset trainSet;
     private final ILabeledDataset testSet;
-    private final EpicBooleanWrapper epicBooleanWrapper;
     //private final List<Instances> splitInstances;
 
-    public EpicEnsembleEvaluator(ILabeledDataset dataset, Integer seed, EpicBooleanWrapper epicBooleanWrapper) throws SplitFailedException, InterruptedException {
+    public EpicEnsembleEvaluator(ILabeledDataset dataset, Integer seed) throws SplitFailedException, InterruptedException {
         // make split
         List<ILabeledDataset> split = SplitterUtil.getLabelStratifiedTrainTestSplit(dataset, seed, .7);
 
         // get train instances from split
         trainSet = split.get(0);
         testSet = split.get(1);
-
-        this.epicBooleanWrapper = epicBooleanWrapper;
     }
 
     @Override
-    public Double evaluate(ComponentInstance ensemble) {
+    public Double evaluate(ComponentInstance ensemble) throws InterruptedException {
         try {
+            if (Thread.interrupted()) {
+                throw new InterruptedException("Thread got interrupted, thus, kill WEKA.");
+            }
             IWekaClassifier rawEnsemble = EpicEnsembleFactory.getEnsemble(ensemble);
             return measureAlgorithmPerformance(rawEnsemble, trainSet, testSet);
         } catch (AlgorithmTimeoutedException | InterruptedException | AlgorithmExecutionCanceledException exx) {
             // throw exx; can't throw the exception! So better stop Hasco differently
-            epicBooleanWrapper.setMyBoolean(false);
-            return Double.MAX_VALUE;
+            throw new InterruptedException();
         }
         catch (Exception e) {
             e.printStackTrace();

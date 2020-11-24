@@ -116,13 +116,11 @@ public class EpicExecutor {
     private IWekaClassifier runHasco(ILabeledDataset dataset, int datasetIndex, int repetition) throws Exception {
         System.out.println("Execution of HASCO #" + repetition + " on dataset: " + DATASET_NAMES.get(datasetIndex) + " began at " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")) + ".");
 
-        EpicBooleanWrapper epicBooleanWrapper = new EpicBooleanWrapper();
-
         String reqInterface = "EpicEnsemble";
-        //File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
-        File componentFile = new File("search-space/ensemble-configuration.json");
+        File componentFile = new File(this.getClass().getClassLoader().getResource("search-space/ensemble-configuration.json").toURI());
+        //File componentFile = new File("search-space/ensemble-configuration.json");
 
-        IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition, epicBooleanWrapper);
+        IObjectEvaluator<ComponentInstance, Double> evaluator = new EpicEnsembleEvaluator(dataset, repetition);
 
         RefinementConfiguredSoftwareConfigurationProblem<Double> problem =
                 new RefinementConfiguredSoftwareConfigurationProblem(componentFile, reqInterface, evaluator);
@@ -142,7 +140,7 @@ public class EpicExecutor {
 
 
 
-        while (hasco.hasNext() && epicBooleanWrapper.getMyBoolean()) {
+        while (hasco.hasNext()) {
             try {
                 IAlgorithmEvent e = hasco.nextWithException();
                 if (e instanceof HASCOSolutionEvent) {
@@ -151,6 +149,7 @@ public class EpicExecutor {
                     solutions.add(s);
                 }
             } catch (AlgorithmTimeoutedException | InterruptedException | AlgorithmExecutionCanceledException exx) {
+                System.out.println("SUCCESSFULLY INTERRUPTED HASCO");
                 exx.printStackTrace();
                 break;
             }
@@ -178,10 +177,10 @@ public class EpicExecutor {
         return DATASET_NAMES.stream().map(
                 s -> {
                     try {
-                        //File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
-                        File dsFile = new File(s);
+                        File dsFile = new File(this.getClass().getClassLoader().getResource(s).toURI());
+                        //File dsFile = new File(s);
                         return ArffDatasetAdapter.readDataset(dsFile);
-                    } catch (DatasetDeserializationFailedException e) {
+                    } catch (DatasetDeserializationFailedException | URISyntaxException e) {
                         e.printStackTrace();
                     }
                     return null; // shouldn't happen

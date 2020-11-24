@@ -7,6 +7,7 @@ import weka.classifiers.trees.J48;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.core.UnsupportedAttributeTypeException;
 
 import java.util.*;
 
@@ -20,7 +21,7 @@ public class EpicEnsemble implements Classifier {
     }
 
     @Override
-    public void buildClassifier(Instances data) throws InterruptedException {
+    public void buildClassifier(Instances data) throws Exception {
         long start = System.currentTimeMillis();
 
         if (Thread.interrupted()) {
@@ -37,11 +38,7 @@ public class EpicEnsemble implements Classifier {
                 }
                 classifiers.get(i).buildClassifier(data);
                 System.out.println("Building: " + classifiers.get(i).getClass().getName());
-            } catch(InterruptedException e) {
-                throw e;
-            } catch (Exception e) {
-                System.out.println("YOOOOMOMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
-                e.printStackTrace();
+            } catch (UnsupportedAttributeTypeException e) {
                 delList.add(i);
             }
         }
